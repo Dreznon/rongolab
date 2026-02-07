@@ -1810,16 +1810,15 @@ Example glyph library JSON entry:
     e.target.value = "";
   });
 
-  // Dropzone support
-  el.dropzone.addEventListener("click", () => el.fileInput.click());
-  el.dropzone.addEventListener("dragover", (e) => { e.preventDefault(); el.dropzone.style.filter="contrast(1.1)"; });
-  el.dropzone.addEventListener("dragleave", () => { el.dropzone.style.filter=""; });
-  el.dropzone.addEventListener("drop", (e) => {
-    e.preventDefault();
-    el.dropzone.style.filter="";
-    const file = e.dataTransfer.files && e.dataTransfer.files[0];
-    handleFile(file);
-  });
+// Dropzone support
+el.dropzone.addEventListener("click", (e) => {
+  // Avoid double-triggering the file picker when clicking the "Choose image…"
+  // label/button or other interactive elements inside the dropzone.
+  const t = (e.target instanceof Element) ? e.target : e.target?.parentElement;
+  const interactive = t && t.closest("label, button, input, select, textarea, a");
+  if (interactive) return;
+  el.fileInput.click();
+});
 
   // ----------------------------
   // Events: Mode toggle
