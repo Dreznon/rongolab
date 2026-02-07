@@ -1,0 +1,2133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>RongoLab — Rongorongo Visual Helper (Standalone)</title>
+  <style>
+    :root{
+      --bg: #f7f4ee;
+      --panel: #ffffff;
+      --ink: #111111;
+      --muted: #5a5a5a;
+      --red: #d61f26;
+      --blue: #1f57d6;
+      --yellow: #f2c200;
+      --shadow: 0 8px 0 rgba(0,0,0,0.08);
+      --b: 3px solid var(--ink);
+      --radius: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, "Futura", "Avenir Next", Avenir, "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:var(--sans);
+      line-height:1.35;
+    }
+
+    /* Bauhaus-ish header */
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 16px;
+      border-bottom:var(--b);
+      background:linear-gradient(90deg, var(--panel) 0%, var(--panel) 70%, rgba(0,0,0,0.02) 100%);
+    }
+    .brand{
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .mark{
+      display:grid;
+      grid-template-columns:18px 18px 18px;
+      grid-template-rows:18px 18px;
+      gap:6px;
+      padding:6px;
+      border:var(--b);
+      background:var(--panel);
+      box-shadow:var(--shadow);
+      border-radius:12px;
+    }
+    .sq{ width:18px;height:18px;border:var(--b); }
+    .sq.red{ background:var(--red); }
+    .sq.blue{ background:var(--blue); }
+    .sq.yellow{ background:var(--yellow); }
+    .sq.white{ background:var(--panel); }
+    h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:0.5px;
+    }
+    .subtitle{
+      margin:2px 0 0 0;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .header-actions{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    button, .btn{
+      appearance:none;
+      border:var(--b);
+      background:var(--panel);
+      color:var(--ink);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      font-weight:700;
+      letter-spacing:0.2px;
+      box-shadow:var(--shadow);
+      transition:transform 0.05s ease;
+      user-select:none;
+    }
+    button:active, .btn:active{ transform:translateY(2px); box-shadow:none; }
+    button.primary{ background:var(--yellow); }
+    button.danger{ background:var(--red); color:#fff; }
+    button.ghost{ background:transparent; box-shadow:none; }
+    button:disabled{ opacity:0.5; cursor:not-allowed; }
+
+    main{
+      display:grid;
+      grid-template-columns: 320px 1fr 360px;
+      grid-template-rows: 1fr auto;
+      gap:14px;
+      padding:14px;
+      height: calc(100% - 72px);
+    }
+
+    .panel{
+      background:var(--panel);
+      border:var(--b);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      min-height:0; /* allow scroll inside */
+    }
+
+    .panel-header{
+      padding:12px 12px 10px 12px;
+      border-bottom:var(--b);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .panel-title{
+      margin:0;
+      font-size:14px;
+      text-transform:uppercase;
+      letter-spacing:0.12em;
+    }
+    .panel-body{
+      padding:12px;
+      overflow:auto;
+      height:100%;
+    }
+
+    /* Left tools */
+    .dropzone{
+      border:var(--b);
+      border-radius:14px;
+      padding:14px;
+      background:linear-gradient(135deg, rgba(242,194,0,0.15), rgba(31,87,214,0.10));
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:flex-start;
+      justify-content:center;
+    }
+    .dropzone strong{ font-size:14px; }
+    .dropzone p{ margin:0; color:var(--muted); font-size:12px; }
+    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .row > *{ flex: 1 1 auto; }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin:10px 0;
+    }
+    label{
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:0.03em;
+    }
+    input[type="file"]{ display:none; }
+    input[type="range"]{ width:100%; }
+    input[type="text"], textarea, select{
+      border:var(--b);
+      border-radius:12px;
+      padding:10px 10px;
+      font-family:var(--sans);
+      font-size:14px;
+      outline:none;
+    }
+    textarea{ min-height:70px; resize:vertical; }
+    .small{
+      font-size:12px;
+      color:var(--muted);
+    }
+    .hint{
+      font-size:12px;
+      color:var(--muted);
+      border-left: 6px solid var(--blue);
+      padding:10px 10px 10px 12px;
+      background:rgba(31,87,214,0.05);
+      border-radius:12px;
+    }
+    .mono{
+      font-family:var(--mono);
+      font-size:12px;
+    }
+
+    /* Canvas center */
+    #canvasWrap{
+      display:flex;
+      flex-direction:column;
+      height:100%;
+      min-height:0;
+    }
+    .canvas-toolbar{
+      display:flex;
+      gap:10px;
+      padding:10px 12px;
+      border-bottom:var(--b);
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border:var(--b);
+      border-radius:999px;
+      background:var(--panel);
+      box-shadow:var(--shadow);
+      font-weight:700;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .pill[aria-pressed="true"]{
+      background:var(--yellow);
+    }
+    .canvas-stack{
+      position:relative;
+      flex:1 1 auto;
+      min-height:0;
+      background: repeating-linear-gradient(
+        45deg,
+        rgba(0,0,0,0.03),
+        rgba(0,0,0,0.03) 10px,
+        rgba(0,0,0,0.00) 10px,
+        rgba(0,0,0,0.00) 20px
+      );
+    }
+    #imgCanvas, #overlayCanvas{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      display:block;
+    }
+    .canvas-footer{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+      border-top:var(--b);
+      padding:12px;
+      background:rgba(0,0,0,0.02);
+    }
+    .previewBox{
+      border:var(--b);
+      border-radius:14px;
+      background:var(--panel);
+      overflow:hidden;
+    }
+    .previewBox header{
+      padding:10px 12px;
+      border-bottom:var(--b);
+      background:var(--panel);
+    }
+    .previewBox header h3{
+      margin:0;
+      font-size:12px;
+      letter-spacing:0.12em;
+      text-transform:uppercase;
+    }
+    .previewBox .content{
+      padding:10px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .previewBox canvas{
+      border:var(--b);
+      border-radius:12px;
+      background:#fff;
+      width:140px;
+      height:140px;
+    }
+    .previewMeta{
+      flex:1;
+      min-width:0;
+    }
+    .previewMeta .mono{
+      word-break:break-word;
+    }
+
+    /* Right library */
+    .searchRow{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding:12px;
+      border-bottom:var(--b);
+    }
+    .searchRow input{
+      flex:1;
+      box-shadow:var(--shadow);
+    }
+    .glyphGrid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap:10px;
+      padding:12px;
+      overflow:auto;
+      height:100%;
+    }
+    .glyphCard{
+      border:var(--b);
+      border-radius:14px;
+      padding:10px;
+      box-shadow:var(--shadow);
+      cursor:pointer;
+      user-select:none;
+      background:var(--panel);
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .glyphCard:active{ transform:translateY(2px); box-shadow:none; }
+    .glyphThumb{
+      width:52px;
+      height:52px;
+      border:var(--b);
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      background:#fff;
+      flex: 0 0 auto;
+    }
+    .glyphThumb svg{ width:42px;height:42px; }
+    .glyphInfo{ min-width:0; }
+    .glyphInfo .name{
+      font-weight:900;
+      font-size:12px;
+      margin:0 0 2px 0;
+      letter-spacing:0.02em;
+    }
+    .glyphInfo .meta{
+      font-size:11px;
+      color:var(--muted);
+      margin:0;
+    }
+
+    .matchList{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:10px;
+    }
+    .matchItem{
+      border:var(--b);
+      border-radius:14px;
+      padding:10px;
+      box-shadow:var(--shadow);
+      display:flex;
+      align-items:center;
+      gap:10px;
+      background:var(--panel);
+      cursor:pointer;
+      user-select:none;
+    }
+    .matchItem:active{ transform:translateY(2px); box-shadow:none; }
+    .badge{
+      border:var(--b);
+      border-radius:999px;
+      padding:6px 8px;
+      font-weight:900;
+      font-size:11px;
+      background:var(--yellow);
+      flex:0 0 auto;
+    }
+    .matchItem .small{ margin:0; }
+
+    /* Bottom sequence */
+    #sequencePanel{ grid-column: 1 / span 3; }
+    .sequenceWrap{
+      display:grid;
+      grid-template-columns: 1fr 360px;
+      gap:14px;
+      padding:12px;
+    }
+    .sequenceRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .token{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border:var(--b);
+      border-radius:999px;
+      box-shadow:var(--shadow);
+      background:var(--panel);
+      cursor:pointer;
+      user-select:none;
+    }
+    .token[aria-selected="true"]{ background:var(--blue); color:#fff; }
+    .token svg{ width:22px;height:22px; }
+    .token .id{
+      font-family:var(--mono);
+      font-size:11px;
+      opacity:0.9;
+    }
+
+    .analysisBox{
+      border:var(--b);
+      border-radius:14px;
+      padding:12px;
+      background:rgba(242,194,0,0.10);
+    }
+    .analysisBox h3{
+      margin:0 0 6px 0;
+      font-size:12px;
+      letter-spacing:0.12em;
+      text-transform:uppercase;
+    }
+    .analysisBox p{ margin:0; font-size:12px; color:var(--muted); }
+
+    .translator{
+      border:var(--b);
+      border-radius:14px;
+      padding:12px;
+      background:rgba(31,87,214,0.06);
+    }
+    .translator h3{
+      margin:0 0 6px 0;
+      font-size:12px;
+      letter-spacing:0.12em;
+      text-transform:uppercase;
+    }
+    .translator .out{
+      font-family:var(--mono);
+      font-size:12px;
+      background:#fff;
+      border:var(--b);
+      border-radius:12px;
+      padding:10px;
+      white-space:pre-wrap;
+      word-break:break-word;
+      min-height:44px;
+    }
+
+    /* Modal */
+    .modal{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:1000;
+    }
+    .modal[aria-hidden="false"]{ display:flex; }
+    .modalCard{
+      width:min(960px, 100%);
+      max-height:calc(100vh - 36px);
+      overflow:auto;
+      border:var(--b);
+      border-radius:18px;
+      background:var(--panel);
+      box-shadow: 0 18px 0 rgba(0,0,0,0.22);
+    }
+    .modalCard header{
+      position:sticky;
+      top:0;
+      background:var(--panel);
+      border-bottom:var(--b);
+      z-index:2;
+    }
+    .modalBody{
+      padding:14px 14px 18px 14px;
+    }
+    .modalBody h2{
+      margin:10px 0 6px 0;
+      font-size:16px;
+    }
+    .modalBody p, .modalBody li{
+      color:var(--muted);
+      font-size:14px;
+    }
+    .kbd{
+      font-family:var(--mono);
+      border:var(--b);
+      border-radius:8px;
+      padding:2px 6px;
+      background:rgba(0,0,0,0.03);
+      color:var(--ink);
+      font-size:12px;
+    }
+
+    /* Responsive */
+    @media (max-width: 1080px){
+      main{
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto;
+        height:auto;
+      }
+      #toolsPanel{ grid-row:1; }
+      #canvasPanel{ grid-row:2; min-height:520px; }
+      #libraryPanel{ grid-row:3; min-height:520px; }
+      #sequencePanel{ grid-row:4; }
+      .sequenceWrap{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="brand">
+    <div class="mark" aria-hidden="true">
+      <div class="sq red"></div>
+      <div class="sq blue"></div>
+      <div class="sq yellow"></div>
+      <div class="sq white"></div>
+      <div class="sq white"></div>
+      <div class="sq white"></div>
+    </div>
+    <div>
+      <h1>RongoLab</h1>
+      <div class="subtitle">A standalone, in-browser helper for Rongorongo image matching (not a definitive decipherment)</div>
+    </div>
+  </div>
+
+  <div class="header-actions">
+    <button class="primary" id="btnAbout" title="What this tool can and cannot do">About</button>
+    <button id="btnExportAll" title="Export your library annotations + sequence to a JSON file">Export</button>
+    <button class="danger" id="btnReset" title="Clear image + local saved data">Reset</button>
+  </div>
+</header>
+
+<main>
+  <!-- Tools -->
+  <section class="panel" id="toolsPanel">
+    <div class="panel-header">
+      <h2 class="panel-title">Tools</h2>
+      <span class="small"><span class="kbd">File</span>-only • No server</span>
+    </div>
+    <div class="panel-body">
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Drop an image here or click to choose a file">
+        <strong>Upload tablet / glyph photo</strong>
+        <p>Drag & drop here, or click to pick a file (PNG/JPG/WebP).</p>
+        <div class="row" style="width:100%">
+          <label class="btn primary" for="fileInput">Choose image…</label>
+          <input id="fileInput" type="file" accept="image/*" />
+          <button id="btnFit" title="Fit image to view">Fit</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Mode</label>
+        <div class="row">
+          <div class="pill" id="modePan" role="button" tabindex="0" aria-pressed="true" title="Pan/zoom the image (mouse drag; wheel to zoom)">
+            Pan/Zoom
+          </div>
+          <div class="pill" id="modeSelect" role="button" tabindex="0" aria-pressed="false" title="Drag to select a region (a glyph) for matching">
+            Select
+          </div>
+        </div>
+        <div class="small">Tip: hold <span class="kbd">Space</span> to pan while in Select mode.</div>
+      </div>
+
+      <div class="field">
+        <label>Preprocessing</label>
+        <div class="hint">
+          These filters improve matching. They do not “translate” Rongorongo—Rongorongo is undeciphered. This tool helps you compare shapes and build a hypothesis trail.
+        </div>
+        <div class="field">
+          <label for="rngContrast">Contrast</label>
+          <input id="rngContrast" type="range" min="-100" max="100" value="15"/>
+        </div>
+        <div class="field">
+          <label for="rngThreshold">Threshold</label>
+          <input id="rngThreshold" type="range" min="0" max="255" value="140"/>
+        </div>
+        <div class="row">
+          <label style="display:flex;gap:10px;align-items:center;flex:1 1 100%;">
+            <input id="chkInvert" type="checkbox"/> Invert
+          </label>
+          <label style="display:flex;gap:10px;align-items:center;flex:1 1 100%;">
+            <input id="chkEdges" type="checkbox"/> Edge-ish
+          </label>
+        </div>
+        <div class="row">
+          <button id="btnAnalyze" class="primary" disabled>Analyze selection</button>
+          <button id="btnClearSel" disabled>Clear selection</button>
+        </div>
+        <div class="small">Selection is required for matching. The “Edge-ish” option is a lightweight Sobel-like pass.</div>
+      </div>
+
+      <div class="field">
+        <label>Import / Extend</label>
+        <div class="row">
+          <label class="btn" for="glyphImport">Import glyph library…</label>
+          <input id="glyphImport" type="file" accept="application/json,.json"/>
+          <label class="btn" for="glossImport">Import glossary…</label>
+          <input id="glossImport" type="file" accept="application/json,.json"/>
+        </div>
+        <div class="small">
+          You can import a JSON glyph library that contains more accurate Barthel-style glyph drawings (as SVG strings or data URLs). This HTML file remains standalone.
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Status</label>
+        <div class="mono" id="status">Ready. Upload an image.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Canvas -->
+  <section class="panel" id="canvasPanel">
+    <div id="canvasWrap">
+      <div class="canvas-toolbar">
+        <button id="btnZoomIn" title="Zoom in">+</button>
+        <button id="btnZoomOut" title="Zoom out">−</button>
+        <button id="btnCenter" title="Center view">Center</button>
+        <span class="small">Mouse wheel to zoom • Drag to pan</span>
+      </div>
+
+      <div class="canvas-stack" id="stack">
+        <canvas id="imgCanvas"></canvas>
+        <canvas id="overlayCanvas"></canvas>
+      </div>
+
+      <div class="canvas-footer">
+        <div class="previewBox">
+          <header><h3>Crop</h3></header>
+          <div class="content">
+            <canvas id="cropCanvas" width="160" height="160" aria-label="Cropped glyph preview"></canvas>
+            <div class="previewMeta">
+              <div class="small">Crop box (image px):</div>
+              <div class="mono" id="cropMeta">—</div>
+              <div style="height:10px"></div>
+              <div class="small">Tip: select tightly around a single glyph.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="previewBox">
+          <header><h3>Processed</h3></header>
+          <div class="content">
+            <canvas id="procCanvas" width="160" height="160" aria-label="Processed glyph preview"></canvas>
+            <div class="previewMeta">
+              <div class="small">Matching results:</div>
+              <div class="matchList" id="matchList">
+                <div class="small">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Library -->
+  <section class="panel" id="libraryPanel">
+    <div class="panel-header">
+      <h2 class="panel-title">Glyph library</h2>
+      <span class="small">Built‑in demo set</span>
+    </div>
+    <div class="searchRow">
+      <input id="searchGlyphs" type="text" placeholder="Search (moon, bird, geometric…)"/>
+      <select id="filterCategory" aria-label="Filter by category">
+        <option value="">All</option>
+      </select>
+    </div>
+    <div class="panel-body" style="padding:0;">
+      <div class="glyphGrid" id="glyphGrid"></div>
+    </div>
+  </section>
+
+  <!-- Sequence -->
+  <section class="panel" id="sequencePanel">
+    <div class="panel-header">
+      <h2 class="panel-title">Sequence & Notes</h2>
+      <div class="row" style="gap:8px">
+        <button id="btnSeqClear" title="Clear the current sequence">Clear</button>
+        <button id="btnSeqExport" title="Export sequence as a text file">Export sequence</button>
+      </div>
+    </div>
+
+    <div class="sequenceWrap">
+      <div>
+        <div class="small" style="margin-bottom:8px">Click a glyph card to add it. Click a token below to annotate it.</div>
+        <div class="sequenceRow" id="sequenceRow" aria-label="Sequence tokens"></div>
+
+        <div style="height:12px"></div>
+
+        <div class="analysisBox" id="analysisBox">
+          <h3>Pattern hints</h3>
+          <p id="patternHint">No pattern hints yet. Build a sequence (or confirm matches) to see notes like “resembles lunar calendar” when applicable.</p>
+        </div>
+
+        <div style="height:12px"></div>
+
+        <div class="translator">
+          <h3>My glossary translation</h3>
+          <div class="small">Assign your own values (phonetic or semantic) to glyphs — this is for your hypothesis work.</div>
+          <div style="height:10px"></div>
+          <div class="out" id="translationOut">—</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel" style="box-shadow:none;">
+          <div class="panel-header">
+            <h2 class="panel-title">Selected token</h2>
+            <span class="small" id="selectedTokenId">—</span>
+          </div>
+          <div class="panel-body">
+            <div class="field">
+              <label>Glossary value (your hypothesis)</label>
+              <input id="glossValue" type="text" placeholder="e.g., 'moon', 'night', 'Ku', 'rei'…"/>
+              <div class="small">Saved in your browser only (localStorage).</div>
+            </div>
+            <div class="field">
+              <label>Notes</label>
+              <textarea id="glossNotes" placeholder="What makes you think this glyph is X? Provenance, parallels, uncertainties…"></textarea>
+            </div>
+            <div class="row">
+              <button id="btnSaveGloss" class="primary" disabled>Save</button>
+              <button id="btnRemoveToken" disabled>Remove token</button>
+            </div>
+            <div style="height:10px"></div>
+            <div class="hint" id="glyphDetails">
+              Select a token (or a library glyph) to view its built-in notes.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<!-- About modal -->
+<div class="modal" id="aboutModal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="About RongoLab">
+  <div class="modalCard">
+    <header>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 12px;">
+        <div>
+          <strong style="letter-spacing:0.06em;">ABOUT RONGOLAB</strong>
+          <div class="small">What it can and cannot do</div>
+        </div>
+        <button id="btnCloseAbout">Close</button>
+      </div>
+    </header>
+    <div class="modalBody">
+      <h2>Reality check</h2>
+      <p>
+        Rongorongo is widely considered undeciphered. This app does not magically “translate” Rongorongo.
+        What it <em>does</em> is help you:
+      </p>
+      <ul>
+        <li>Upload a photo and isolate a glyph region.</li>
+        <li>Apply quick preprocessing (contrast/threshold/invert/edge-ish).</li>
+        <li>Match the selected region against a built-in glyph demo set using shape similarity (binary fingerprint).</li>
+        <li>Build a glyph sequence, annotate it, and apply your own glossary mapping.</li>
+        <li>Get a small number of cautious, well-known “pattern hints” (e.g., lunar-calendar-like runs of crescent symbols).</li>
+      </ul>
+
+      <h2>How matching works</h2>
+      <p>
+        Matching uses a simple binary fingerprint (downsample to 32×32, threshold to black/white),
+        then compares with each library glyph fingerprint using a Jaccard-like similarity score.
+        This is not robust OCR. It’s a fast in-browser helper.
+      </p>
+
+      <h2>Extending with a real glyph set</h2>
+      <p>
+        The built-in library is intentionally small (demo motifs). To work with more accurate glyph drawings,
+        import a JSON library (your own or a scholarly-derived set you create).
+      </p>
+      <p class="mono" style="background:#fff;border:var(--b);border-radius:12px;padding:10px;">
+Example glyph library JSON entry:
+{
+  "id": "BARTHEL_380",
+  "name": "Crescent (moon)",
+  "category": "Celestial",
+  "notes": "Often associated with the Mamari tablet lunar calendar (widely discussed).",
+  "svg": "&lt;svg viewBox='0 0 64 64'&gt;...&lt;/svg&gt;"
+}
+      </p>
+
+      <h2>Known hints implemented</h2>
+      <ul>
+        <li><strong>Lunar calendar heuristic:</strong> if your sequence contains many consecutive “crescent/moon” glyphs, the app flags it as “calendar-like”.</li>
+      </ul>
+
+      <h2>Sources worth reading</h2>
+      <p>
+        The app does not bundle the full Barthel corpus or Fischer drawings. If you want to build a serious glyph library,
+        start with these types of materials (public-domain scans and scholarly resources are widely referenced):
+      </p>
+      <ul>
+        <li>Thomas S. Barthel (1958), <em>Grundlagen zur Entzifferung der Osterinselschrift</em> (standard glyph catalog; numbered list).</li>
+        <li>Steven R. Fischer (1997), <em>Rongorongo: The Easter Island Script</em> (redrawings; controversial decipherment claims).</li>
+        <li>Mamari tablet “lunar calendar” literature (e.g., Guy; Horley) — one of the few widely accepted structured sections.</li>
+      </ul>
+
+      <h2>Keyboard shortcuts</h2>
+      <ul>
+        <li><span class="kbd">Space</span>: temporarily pan while in Select mode</li>
+        <li><span class="kbd">Esc</span>: close About</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ----------------------------
+  // Built-in demo glyph library
+  // (Replace/extend via import for real Barthel-style glyphs.)
+  // ----------------------------
+  const BUILTIN_GLYPHS = [
+    {
+      id: "MOTIF_MOON",
+      name: "Moon (crescent)",
+      category: "Celestial",
+      notes: "Crescent-like glyph. Many researchers discuss repeated crescents on the Mamari tablet as a lunar calendar section (one of the few widely accepted structured sequences).",
+      svg: `<svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M44 10c-12 5-20 16-20 22s8 17 20 22c-20 0-34-13-34-22S24 10 44 10Z" fill="none" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+      </svg>`
+    },
+    {
+      id: "MOTIF_STAR",
+      name: "Star",
+      category: "Celestial",
+      notes: "Star-like motif (demo).",
+      svg: `<svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M32 8l6 18h18l-15 11 6 19-15-11-15 11 6-19L8 26h18z" fill="none" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+      </svg>`
+    },
+    {
+      id: "MOTIF_SUN",
+      name: "Sun (circle+rays)",
+      category: "Celestial",
+      notes: "Sun-like motif (demo).",
+      svg: `<svg viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="32" r="12" fill="none" stroke="#111" stroke-width="4"/>
+        <path d="M32 6v10M32 48v10M6 32h10M48 32h10M12 12l7 7M45 45l7 7M52 12l-7 7M19 45l-7 7" fill="none" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+      </svg>`
+    },
+    {
+      id: "MOTIF_BIRD",
+      name: "Bird",
+      category: "Fauna",
+      notes: "Bird-like motif (demo).",
+      svg: `<svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M12 40c12-10 20-14 30-14 8 0 10 2 10 6 0 5-5 8-13 8H30l-6 10" fill="none" stroke="#111" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M40 26l-6-10" fill="none" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="44" cy="30" r="2" fill="#111"/>
+      </svg>`
+    },
+    {
+      id: "MOTIF_FISH",
+      name: "Fish",
+      category: "Fauna",
+      notes: "Fish-like motif (demo).",
+      svg: `<svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M16 32c8-10 18-14 28-12 4 1 8 3 12 12-4 9-8 11-12 12-10 2-20-2-28-12Z" fill="none" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M16 32L6 24v16l10-8Z" fill="none" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+        <circle cx="36" cy="30" r="2" fill="#111"/>
+      </svg>`
+    },
+    {
+      id: "MOTIF_TURTLE",
+      name: "Turtle",
+      category: "Fauna",
+      notes: "Turtle-like motif (demo).",
+      svg: `<svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M18 36c0-10 10-18 14-18s14 8 14 18-8 16-14 16-14-6-14-16Z" fill="none" stroke="#111" stroke-width="4"/>
+        <path d="M16 36h-6M54 36h-6M26 22l-4-6M38 22l4-6M26 50l-4 6M38 50l4 6" fill="none" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+      </svg>`
+    },
+    {
+      id: "MOTIF_HUMAN",
+      name: "Human figure",
+      category: "Human",
+      notes: "Anthropomorphic motif (demo).",
+      svg: `<svg viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="16" r="7" fill="none" stroke="#111" stroke-width="4"/>
+        <path d="M32 23v20M18 32h28M22 56l10-13 10 13" fill="none" stroke="#111" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`
+    },
+    {
+      id: "MOTIF_PLANT",
+      name: "Plant/leaf",
+      category: "Flora",
+      notes: "Plant-like motif (demo).",
+      svg: `<svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M32 54V14" fill="none" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+        <path d="M32 30c-10 0-18-8-18-18 10 0 18 8 18 18Z" fill="none" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M32 38c10 0 18 8 18 18-10 0-18-8-18-18Z" fill="none" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+      </svg>`
+    },
+    {
+      id: "MOTIF_HOUSE",
+      name: "House/structure",
+      category: "Objects",
+      notes: "Structure-like motif (demo).",
+      svg: `<svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M14 30L32 14l18 16" fill="none" stroke="#111" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M18 30v22h28V30" fill="none" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M28 52V40h8v12" fill="none" stroke="#111" stroke-width="4" stroke-linejoin="round"/>
+      </svg>`
+    },
+    {
+      id: "MOTIF_CANOE",
+      name: "Canoe/boat",
+      category: "Objects",
+      notes: "Boat-like motif (demo).",
+      svg: `<svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M10 40c8 10 36 10 44 0" fill="none" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+        <path d="M18 38l4-18M46 38l-4-18" fill="none" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+        <path d="M22 22h20" fill="none" stroke="#111" stroke-width="4" stroke-linecap="round"/>
+      </svg>`
+    },
+    {
+      id: "GEOM_CHEVRON",
+      name: "Geometric chevron",
+      category: "Geometric",
+      notes: "Chevron/zigzag (demo).",
+      svg: `<svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M10 22l22 20 22-20" fill="none" stroke="#111" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`
+    },
+    {
+      id: "GEOM_RING_DOT",
+      name: "Ring with dot",
+      category: "Geometric",
+      notes: "Ring/dot (demo).",
+      svg: `<svg viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="32" r="18" fill="none" stroke="#111" stroke-width="4"/>
+        <circle cx="32" cy="32" r="4" fill="#111"/>
+      </svg>`
+    }
+  ];
+
+  // ----------------------------
+  // Elements
+  // ----------------------------
+  const el = {
+    status: document.getElementById("status"),
+    dropzone: document.getElementById("dropzone"),
+    fileInput: document.getElementById("fileInput"),
+    btnFit: document.getElementById("btnFit"),
+    btnZoomIn: document.getElementById("btnZoomIn"),
+    btnZoomOut: document.getElementById("btnZoomOut"),
+    btnCenter: document.getElementById("btnCenter"),
+
+    modePan: document.getElementById("modePan"),
+    modeSelect: document.getElementById("modeSelect"),
+
+    rngContrast: document.getElementById("rngContrast"),
+    rngThreshold: document.getElementById("rngThreshold"),
+    chkInvert: document.getElementById("chkInvert"),
+    chkEdges: document.getElementById("chkEdges"),
+    btnAnalyze: document.getElementById("btnAnalyze"),
+    btnClearSel: document.getElementById("btnClearSel"),
+
+    imgCanvas: document.getElementById("imgCanvas"),
+    overlayCanvas: document.getElementById("overlayCanvas"),
+    stack: document.getElementById("stack"),
+
+    cropCanvas: document.getElementById("cropCanvas"),
+    procCanvas: document.getElementById("procCanvas"),
+    cropMeta: document.getElementById("cropMeta"),
+    matchList: document.getElementById("matchList"),
+
+    glyphGrid: document.getElementById("glyphGrid"),
+    searchGlyphs: document.getElementById("searchGlyphs"),
+    filterCategory: document.getElementById("filterCategory"),
+
+    sequenceRow: document.getElementById("sequenceRow"),
+    btnSeqClear: document.getElementById("btnSeqClear"),
+    btnSeqExport: document.getElementById("btnSeqExport"),
+    patternHint: document.getElementById("patternHint"),
+
+    selectedTokenId: document.getElementById("selectedTokenId"),
+    glossValue: document.getElementById("glossValue"),
+    glossNotes: document.getElementById("glossNotes"),
+    btnSaveGloss: document.getElementById("btnSaveGloss"),
+    btnRemoveToken: document.getElementById("btnRemoveToken"),
+    glyphDetails: document.getElementById("glyphDetails"),
+    translationOut: document.getElementById("translationOut"),
+
+    glyphImport: document.getElementById("glyphImport"),
+    glossImport: document.getElementById("glossImport"),
+
+    btnAbout: document.getElementById("btnAbout"),
+    aboutModal: document.getElementById("aboutModal"),
+    btnCloseAbout: document.getElementById("btnCloseAbout"),
+    btnExportAll: document.getElementById("btnExportAll"),
+    btnReset: document.getElementById("btnReset"),
+  };
+
+  // ----------------------------
+  // State
+  // ----------------------------
+  const state = {
+    mode: "pan", // "pan" | "select"
+    img: null,            // HTMLImageElement
+    imgSourceCanvas: null,// Offscreen canvas at natural size
+    view: { scale: 1, ox: 0, oy: 0 },
+    dragging: { active:false, kind:null, startX:0, startY:0, startOX:0, startOY:0 },
+    selection: null, // {x,y,w,h} in image coordinates
+    crop: { canvas: null, imageData: null }, // original crop pixels
+    processed: { canvas: null, imageData: null, fingerprint: null }, // processed crop
+    glyphs: [...BUILTIN_GLYPHS],
+    glyphMap: new Map(),
+    glyphFingerprints: new Map(), // id -> Uint8Array (0/1)
+    matches: [],
+    sequence: [], // array of glyph ids
+    selectedTokenIndex: null,
+    glossary: {}, // glyphId -> {value, notes}
+    spaceDown: false,
+  };
+
+  // localStorage keys
+  const LS = {
+    sequence: "rongolab.sequence.v1",
+    glossary: "rongolab.glossary.v1",
+    glyphs: "rongolab.glyphs.custom.v1"
+  };
+
+  // ----------------------------
+  // Utilities
+  // ----------------------------
+  function setStatus(msg){
+    el.status.textContent = msg;
+  }
+
+  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+
+  function svgToDataUrl(svg){
+    const cleaned = svg.replace(/\s+/g, " ").trim();
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(cleaned);
+  }
+
+  function downloadText(filename, text){
+    const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadJson(filename, obj){
+    downloadText(filename, JSON.stringify(obj, null, 2));
+  }
+
+  function loadLS(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      if(!raw) return fallback;
+      return JSON.parse(raw);
+    }catch{
+      return fallback;
+    }
+  }
+
+  function saveLS(key, obj){
+    localStorage.setItem(key, JSON.stringify(obj));
+  }
+
+  function clearAllLS(){
+    Object.values(LS).forEach(k => localStorage.removeItem(k));
+  }
+
+  // ----------------------------
+  // Canvas sizing + drawing
+  // ----------------------------
+  const imgCtx = el.imgCanvas.getContext("2d");
+  const ovCtx = el.overlayCanvas.getContext("2d");
+  const cropCtx = el.cropCanvas.getContext("2d");
+  const procCtx = el.procCanvas.getContext("2d");
+
+  function resizeCanvasToDisplaySize(canvas){
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const w = Math.max(1, Math.floor(rect.width * dpr));
+    const h = Math.max(1, Math.floor(rect.height * dpr));
+    if(canvas.width !== w || canvas.height !== h){
+      canvas.width = w; canvas.height = h;
+      return true;
+    }
+    return false;
+  }
+
+  function draw(){
+    resizeCanvasToDisplaySize(el.imgCanvas);
+    resizeCanvasToDisplaySize(el.overlayCanvas);
+
+    imgCtx.clearRect(0,0,el.imgCanvas.width, el.imgCanvas.height);
+    ovCtx.clearRect(0,0,el.overlayCanvas.width, el.overlayCanvas.height);
+
+    if(!state.img){
+      // empty state
+      ovCtx.save();
+      ovCtx.scale(window.devicePixelRatio||1, window.devicePixelRatio||1);
+      ovCtx.restore();
+      return;
+    }
+
+    const {scale, ox, oy} = state.view;
+
+    imgCtx.save();
+    imgCtx.setTransform(scale, 0, 0, scale, ox, oy);
+    imgCtx.imageSmoothingEnabled = true;
+    imgCtx.drawImage(state.img, 0, 0);
+    imgCtx.restore();
+
+    // selection overlay
+    if(state.selection){
+      const r = imageRectToScreenRect(state.selection);
+      ovCtx.save();
+      ovCtx.lineWidth = 3 * (window.devicePixelRatio||1);
+      ovCtx.strokeStyle = "#111";
+      ovCtx.setLineDash([8*(window.devicePixelRatio||1), 6*(window.devicePixelRatio||1)]);
+      ovCtx.strokeRect(r.x, r.y, r.w, r.h);
+
+      // handles
+      ovCtx.setLineDash([]);
+      ovCtx.fillStyle = "rgba(242,194,0,0.25)";
+      ovCtx.fillRect(r.x, r.y, r.w, r.h);
+      ovCtx.restore();
+    }
+  }
+
+  function fitImage(){
+    if(!state.img) return;
+    const cw = el.imgCanvas.getBoundingClientRect().width;
+    const ch = el.imgCanvas.getBoundingClientRect().height;
+    const iw = state.img.naturalWidth;
+    const ih = state.img.naturalHeight;
+
+    const margin = 18;
+    const scale = Math.min((cw - margin*2)/iw, (ch - margin*2)/ih);
+    const dpr = window.devicePixelRatio || 1;
+    // transform is in device pixels; we use device pixels in canvas coords
+    const canvasW = el.imgCanvas.width || 1;
+    const canvasH = el.imgCanvas.height || 1;
+
+    // if canvas not yet resized, resize now
+    resizeCanvasToDisplaySize(el.imgCanvas);
+    resizeCanvasToDisplaySize(el.overlayCanvas);
+
+    const targetScale = scale * dpr;
+    const ox = (el.imgCanvas.width - iw*targetScale)/2;
+    const oy = (el.imgCanvas.height - ih*targetScale)/2;
+
+    state.view.scale = targetScale;
+    state.view.ox = ox;
+    state.view.oy = oy;
+
+    draw();
+  }
+
+  function centerView(){
+    if(!state.img) return;
+    const targetScale = state.view.scale;
+    const iw = state.img.naturalWidth;
+    const ih = state.img.naturalHeight;
+
+    const ox = (el.imgCanvas.width - iw*targetScale)/2;
+    const oy = (el.imgCanvas.height - ih*targetScale)/2;
+
+    state.view.ox = ox;
+    state.view.oy = oy;
+    draw();
+  }
+
+  function zoomAt(factor, screenX, screenY){
+    if(!state.img) return;
+    const oldScale = state.view.scale;
+    const newScale = clamp(oldScale * factor, 0.1, 12 * (window.devicePixelRatio||1));
+
+    // keep point under cursor stable:
+    // screen = img * scale + offset
+    // img = (screen - offset)/scale
+    const ix = (screenX - state.view.ox) / oldScale;
+    const iy = (screenY - state.view.oy) / oldScale;
+
+    state.view.scale = newScale;
+    state.view.ox = screenX - ix * newScale;
+    state.view.oy = screenY - iy * newScale;
+
+    draw();
+  }
+
+  function screenToImagePoint(sx, sy){
+    const {scale, ox, oy} = state.view;
+    return {
+      x: (sx - ox) / scale,
+      y: (sy - oy) / scale
+    };
+  }
+
+  function imageRectToScreenRect(r){
+    const {scale, ox, oy} = state.view;
+    return {
+      x: r.x*scale + ox,
+      y: r.y*scale + oy,
+      w: r.w*scale,
+      h: r.h*scale
+    };
+  }
+
+  // ----------------------------
+  // Selection / cropping
+  // ----------------------------
+  function clearSelection(){
+    state.selection = null;
+    state.crop = { canvas:null, imageData:null };
+    state.processed = { canvas:null, imageData:null, fingerprint:null };
+    el.cropMeta.textContent = "—";
+    cropCtx.clearRect(0,0,el.cropCanvas.width, el.cropCanvas.height);
+    procCtx.clearRect(0,0,el.procCanvas.width, el.procCanvas.height);
+    el.matchList.innerHTML = `<div class="small">—</div>`;
+    el.btnAnalyze.disabled = true;
+    el.btnClearSel.disabled = true;
+    state.matches = [];
+    draw();
+  }
+
+  function makeCropFromSelection(){
+    if(!state.selection || !state.imgSourceCanvas) return;
+    const s = state.selection;
+    const ix = Math.floor(clamp(s.x, 0, state.img.naturalWidth));
+    const iy = Math.floor(clamp(s.y, 0, state.img.naturalHeight));
+    const iw = Math.floor(clamp(s.w, 1, state.img.naturalWidth - ix));
+    const ih = Math.floor(clamp(s.h, 1, state.img.naturalHeight - iy));
+
+    // offscreen crop canvas
+    const c = document.createElement("canvas");
+    c.width = iw; c.height = ih;
+    const cctx = c.getContext("2d");
+    cctx.drawImage(state.imgSourceCanvas, ix, iy, iw, ih, 0, 0, iw, ih);
+
+    const imageData = cctx.getImageData(0,0,iw,ih);
+    state.crop = { canvas: c, imageData };
+    el.cropMeta.textContent = `x:${ix}, y:${iy}, w:${iw}, h:${ih}`;
+    drawCropPreview();
+    el.btnAnalyze.disabled = false;
+    el.btnClearSel.disabled = false;
+  }
+
+  function drawCropPreview(){
+    cropCtx.clearRect(0,0,el.cropCanvas.width, el.cropCanvas.height);
+    if(!state.crop.canvas) return;
+    // fit crop into preview canvas
+    const cw = el.cropCanvas.width;
+    const ch = el.cropCanvas.height;
+    const iw = state.crop.canvas.width;
+    const ih = state.crop.canvas.height;
+    const scale = Math.min(cw/iw, ch/ih);
+    const w = iw*scale;
+    const h = ih*scale;
+    const x = (cw-w)/2;
+    const y = (ch-h)/2;
+    cropCtx.imageSmoothingEnabled = true;
+    cropCtx.drawImage(state.crop.canvas, x, y, w, h);
+  }
+
+  // ----------------------------
+  // Processing pipeline (grayscale -> contrast -> threshold -> optional edge-ish -> invert)
+  // ----------------------------
+  function applyProcessing(){
+    if(!state.crop.imageData) return null;
+
+    const contrast = parseInt(el.rngContrast.value, 10) / 100; // -1..1
+    const threshold = parseInt(el.rngThreshold.value, 10); // 0..255
+    const invert = !!el.chkInvert.checked;
+    const edgeish = !!el.chkEdges.checked;
+
+    const src = state.crop.imageData;
+    const dst = new ImageData(src.width, src.height);
+    const sdata = src.data;
+    const ddata = dst.data;
+
+    // grayscale + contrast
+    // contrast factor (simple) with range [-1,1]
+    // formula: new = (old - 128) * (1+contrast*2) + 128
+    const factor = 1 + contrast*2;
+
+    for(let i=0;i<sdata.length;i+=4){
+      const r = sdata[i], g = sdata[i+1], b = sdata[i+2];
+      const gray = 0.299*r + 0.587*g + 0.114*b;
+      let v = (gray - 128) * factor + 128;
+      v = clamp(v, 0, 255);
+      ddata[i] = ddata[i+1] = ddata[i+2] = v;
+      ddata[i+3] = 255;
+    }
+
+    // optional edge-ish: a quick gradient magnitude on the grayscale
+    if(edgeish){
+      // Sobel kernels
+      const w = dst.width;
+      const h = dst.height;
+      const tmp = new Uint8ClampedArray(ddata.length);
+      tmp.set(ddata);
+
+      function getGray(x,y){
+        const idx = (y*w + x)*4;
+        return tmp[idx];
+      }
+
+      for(let y=1;y<h-1;y++){
+        for(let x=1;x<w-1;x++){
+          const gx =
+            -1*getGray(x-1,y-1) + 1*getGray(x+1,y-1) +
+            -2*getGray(x-1,y)   + 2*getGray(x+1,y) +
+            -1*getGray(x-1,y+1) + 1*getGray(x+1,y+1);
+          const gy =
+            -1*getGray(x-1,y-1) + -2*getGray(x,y-1) + -1*getGray(x+1,y-1) +
+             1*getGray(x-1,y+1) +  2*getGray(x,y+1) +  1*getGray(x+1,y+1);
+          let mag = Math.sqrt(gx*gx + gy*gy);
+          mag = clamp(mag, 0, 255);
+          const idx = (y*w + x)*4;
+          ddata[idx] = ddata[idx+1] = ddata[idx+2] = mag;
+        }
+      }
+    }
+
+    // threshold -> binary
+    for(let i=0;i<ddata.length;i+=4){
+      let v = ddata[i];
+      v = v >= threshold ? 255 : 0;
+      if(invert) v = 255 - v;
+      ddata[i] = ddata[i+1] = ddata[i+2] = v;
+      ddata[i+3] = 255;
+    }
+
+    // store
+    state.processed.imageData = dst;
+
+    // render to processed preview
+    drawProcessedPreview();
+
+    // fingerprint
+    state.processed.fingerprint = fingerprintFromImageData(dst);
+
+    return dst;
+  }
+
+  function drawProcessedPreview(){
+    procCtx.clearRect(0,0,el.procCanvas.width, el.procCanvas.height);
+    if(!state.processed.imageData) return;
+
+    // Create a small offscreen canvas from processed image
+    const c = document.createElement("canvas");
+    c.width = state.processed.imageData.width;
+    c.height = state.processed.imageData.height;
+    const cctx = c.getContext("2d");
+    cctx.putImageData(state.processed.imageData, 0, 0);
+
+    // fit into preview
+    const cw = el.procCanvas.width;
+    const ch = el.procCanvas.height;
+    const iw = c.width;
+    const ih = c.height;
+    const scale = Math.min(cw/iw, ch/ih);
+    const w = iw*scale;
+    const h = ih*scale;
+    const x = (cw-w)/2;
+    const y = (ch-h)/2;
+    procCtx.imageSmoothingEnabled = false;
+    procCtx.drawImage(c, x, y, w, h);
+  }
+
+  function fingerprintFromImageData(imageData){
+    // downscale to 32x32, then get binary values
+    const target = 32;
+    const c = document.createElement("canvas");
+    c.width = target; c.height = target;
+    const cctx = c.getContext("2d");
+
+    // draw original into temp canvas
+    const srcCanvas = document.createElement("canvas");
+    srcCanvas.width = imageData.width;
+    srcCanvas.height = imageData.height;
+    const sctx = srcCanvas.getContext("2d");
+    sctx.putImageData(imageData, 0, 0);
+
+    cctx.imageSmoothingEnabled = true;
+    cctx.drawImage(srcCanvas, 0, 0, target, target);
+    const data = cctx.getImageData(0,0,target,target).data;
+
+    const fp = new Uint8Array(target*target);
+    for(let i=0,j=0;i<data.length;i+=4,j++){
+      // after threshold step, pixel is either 0 or 255
+      const v = data[i];
+      fp[j] = v < 128 ? 1 : 0; // 1 = "ink"/black
+    }
+    return fp;
+  }
+
+  function jaccardSimilarity(fpA, fpB){
+    // similarity on ink pixels: intersection/union
+    let inter = 0, union = 0;
+    for(let i=0;i<fpA.length;i++){
+      const a = fpA[i], b = fpB[i];
+      if(a || b) union++;
+      if(a && b) inter++;
+    }
+    if(union === 0) return 0;
+    return inter / union;
+  }
+
+  // ----------------------------
+  // Glyph library rendering + fingerprints
+  // ----------------------------
+  async function ensureGlyphFingerprints(){
+    // Build map + categories
+    state.glyphMap.clear();
+    for(const g of state.glyphs){
+      state.glyphMap.set(g.id, g);
+    }
+
+    // categories
+    const cats = Array.from(new Set(state.glyphs.map(g => g.category))).sort((a,b)=>a.localeCompare(b));
+    el.filterCategory.innerHTML = `<option value="">All</option>` + cats.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+
+    // fingerprints
+    setStatus("Preparing glyph fingerprints…");
+    for(const g of state.glyphs){
+      if(state.glyphFingerprints.has(g.id)) continue;
+      const fp = await fingerprintFromGlyph(g);
+      state.glyphFingerprints.set(g.id, fp);
+    }
+    setStatus("Ready.");
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, ch => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[ch]));
+  }
+
+  function fingerprintFromGlyph(glyph){
+    return new Promise((resolve, reject) => {
+      // Prefer svg if provided; else imageDataUrl
+      if(glyph.svg){
+        const img = new Image();
+        img.onload = () => {
+          try{
+            const c = document.createElement("canvas");
+            c.width = 32; c.height = 32;
+            const cctx = c.getContext("2d");
+            cctx.clearRect(0,0,32,32);
+            cctx.imageSmoothingEnabled = true;
+            // draw white background then glyph
+            cctx.fillStyle = "#fff";
+            cctx.fillRect(0,0,32,32);
+            cctx.drawImage(img, 0, 0, 32, 32);
+            const data = cctx.getImageData(0,0,32,32).data;
+            const fp = new Uint8Array(32*32);
+            for(let i=0,j=0;i<data.length;i+=4,j++){
+              // treat dark pixels as ink
+              const r=data[i], g=data[i+1], b=data[i+2];
+              const gray = 0.299*r + 0.587*g + 0.114*b;
+              fp[j] = gray < 200 ? 1 : 0;
+            }
+            resolve(fp);
+          }catch(err){
+            reject(err);
+          }
+        };
+        img.onerror = reject;
+        img.src = svgToDataUrl(glyph.svg);
+      }else if(glyph.imageDataUrl){
+        const img = new Image();
+        img.onload = () => {
+          try{
+            const c = document.createElement("canvas");
+            c.width = 32; c.height = 32;
+            const cctx = c.getContext("2d");
+            cctx.fillStyle = "#fff";
+            cctx.fillRect(0,0,32,32);
+            cctx.drawImage(img, 0, 0, 32, 32);
+            const data = cctx.getImageData(0,0,32,32).data;
+            const fp = new Uint8Array(32*32);
+            for(let i=0,j=0;i<data.length;i+=4,j++){
+              const r=data[i], g=data[i+1], b=data[i+2];
+              const gray = 0.299*r + 0.587*g + 0.114*b;
+              fp[j] = gray < 200 ? 1 : 0;
+            }
+            resolve(fp);
+          }catch(err){
+            reject(err);
+          }
+        };
+        img.onerror = reject;
+        img.src = glyph.imageDataUrl;
+      }else{
+        resolve(new Uint8Array(32*32)); // empty
+      }
+    });
+  }
+
+  function renderGlyphGrid(){
+    const q = el.searchGlyphs.value.trim().toLowerCase();
+    const cat = el.filterCategory.value;
+
+    const filtered = state.glyphs.filter(g => {
+      const okCat = !cat || g.category === cat;
+      if(!okCat) return false;
+      if(!q) return true;
+      const hay = `${g.id} ${g.name} ${g.category} ${g.notes||""}`.toLowerCase();
+      return hay.includes(q);
+    });
+
+    el.glyphGrid.innerHTML = filtered.map(g => {
+      return `
+        <div class="glyphCard" data-glyph="${escapeHtml(g.id)}" title="Click to add to sequence">
+          <div class="glyphThumb">${g.svg || `<span class="small">img</span>`}</div>
+          <div class="glyphInfo">
+            <p class="name">${escapeHtml(g.name)}</p>
+            <p class="meta"><span class="mono">${escapeHtml(g.id)}</span> • ${escapeHtml(g.category)}</p>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    // click handlers
+    el.glyphGrid.querySelectorAll(".glyphCard").forEach(card => {
+      card.addEventListener("click", () => {
+        const id = card.getAttribute("data-glyph");
+        addToSequence(id);
+        showGlyphDetails(id);
+      });
+    });
+  }
+
+  function showGlyphDetails(glyphId){
+    const g = state.glyphMap.get(glyphId);
+    if(!g){
+      el.glyphDetails.textContent = "Glyph not found.";
+      return;
+    }
+    const gloss = state.glossary[glyphId];
+    const myVal = gloss?.value ? `<strong>My value:</strong> ${escapeHtml(gloss.value)}<br>` : "";
+    const myNotes = gloss?.notes ? `<strong>My notes:</strong> ${escapeHtml(gloss.notes).replace(/\n/g,"<br>")}<br>` : "";
+    el.glyphDetails.innerHTML = `
+      <div style="display:flex;gap:10px;align-items:flex-start;">
+        <div style="width:60px;height:60px;border:var(--b);border-radius:12px;background:#fff;display:grid;place-items:center;flex:0 0 auto;">
+          ${g.svg || ""}
+        </div>
+        <div style="min-width:0">
+          <div style="font-weight:900;letter-spacing:0.02em;">${escapeHtml(g.name)}</div>
+          <div class="small"><span class="mono">${escapeHtml(g.id)}</span> • ${escapeHtml(g.category)}</div>
+          <div style="height:8px"></div>
+          <div class="small">${myVal}${myNotes}<strong>Built‑in notes:</strong> ${escapeHtml(g.notes||"—")}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ----------------------------
+  // Matching
+  // ----------------------------
+  function analyzeSelection(){
+    if(!state.selection || !state.crop.imageData){
+      setStatus("Select a glyph region first.");
+      return;
+    }
+    if(!state.glyphFingerprints.size){
+      setStatus("Glyph fingerprints not ready yet.");
+      return;
+    }
+
+    applyProcessing();
+    if(!state.processed.fingerprint){
+      setStatus("Processing failed.");
+      return;
+    }
+
+    const fpQ = state.processed.fingerprint;
+    const scored = [];
+    for(const g of state.glyphs){
+      const fp = state.glyphFingerprints.get(g.id);
+      if(!fp) continue;
+      const sim = jaccardSimilarity(fpQ, fp);
+      scored.push({ id: g.id, sim });
+    }
+    scored.sort((a,b) => b.sim - a.sim);
+    state.matches = scored.slice(0, 6);
+
+    renderMatches();
+    setStatus("Analysis complete. Click a match to add it to the sequence.");
+  }
+
+  function renderMatches(){
+    if(!state.matches.length){
+      el.matchList.innerHTML = `<div class="small">—</div>`;
+      return;
+    }
+    el.matchList.innerHTML = state.matches.map((m, idx) => {
+      const g = state.glyphMap.get(m.id);
+      const pct = Math.round(m.sim * 100);
+      return `
+        <div class="matchItem" data-glyph="${escapeHtml(m.id)}" title="Click to add this glyph to the sequence">
+          <div class="badge">#${idx+1}</div>
+          <div class="glyphThumb" style="width:44px;height:44px;border-radius:12px;">${g?.svg||""}</div>
+          <div style="min-width:0">
+            <div style="font-weight:900;font-size:12px;">${escapeHtml(g?.name||m.id)}</div>
+            <p class="small mono" style="margin:2px 0 0 0;">${escapeHtml(m.id)} • ${pct}%</p>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    el.matchList.querySelectorAll(".matchItem").forEach(item => {
+      item.addEventListener("click", () => {
+        const id = item.getAttribute("data-glyph");
+        addToSequence(id);
+        showGlyphDetails(id);
+      });
+    });
+  }
+
+  // ----------------------------
+  // Sequence + glossary
+  // ----------------------------
+  function addToSequence(glyphId){
+    if(!state.glyphMap.has(glyphId)) return;
+    state.sequence.push(glyphId);
+    saveLS(LS.sequence, state.sequence);
+    renderSequence();
+    updateHintsAndTranslation();
+  }
+
+  function renderSequence(){
+    if(!state.sequence.length){
+      el.sequenceRow.innerHTML = `<div class="small">No glyphs yet. Click a glyph in the library or a match result to add it.</div>`;
+      state.selectedTokenIndex = null;
+      updateSelectedTokenUI();
+      return;
+    }
+
+    el.sequenceRow.innerHTML = state.sequence.map((id, i) => {
+      const g = state.glyphMap.get(id);
+      const selected = (state.selectedTokenIndex === i);
+      return `
+        <div class="token" data-idx="${i}" aria-selected="${selected ? "true" : "false"}" title="Click to select">
+          ${g?.svg || ""}
+          <span class="id">${escapeHtml(id)}</span>
+        </div>
+      `;
+    }).join("");
+
+    el.sequenceRow.querySelectorAll(".token").forEach(tok => {
+      tok.addEventListener("click", () => {
+        const idx = parseInt(tok.getAttribute("data-idx"), 10);
+        state.selectedTokenIndex = idx;
+        updateSelectedTokenUI();
+        renderSequence(); // refresh selection highlight
+      });
+    });
+
+    // if nothing selected yet, auto-select last
+    if(state.selectedTokenIndex === null){
+      state.selectedTokenIndex = state.sequence.length - 1;
+      updateSelectedTokenUI();
+      renderSequence();
+    }
+  }
+
+  function updateSelectedTokenUI(){
+    const idx = state.selectedTokenIndex;
+    if(idx === null || idx < 0 || idx >= state.sequence.length){
+      el.selectedTokenId.textContent = "—";
+      el.glossValue.value = "";
+      el.glossNotes.value = "";
+      el.btnSaveGloss.disabled = true;
+      el.btnRemoveToken.disabled = true;
+      return;
+    }
+
+    const glyphId = state.sequence[idx];
+    el.selectedTokenId.textContent = glyphId;
+
+    const entry = state.glossary[glyphId] || {value:"", notes:""};
+    el.glossValue.value = entry.value || "";
+    el.glossNotes.value = entry.notes || "";
+
+    el.btnSaveGloss.disabled = false;
+    el.btnRemoveToken.disabled = false;
+
+    showGlyphDetails(glyphId);
+  }
+
+  function saveGlossaryForSelected(){
+    const idx = state.selectedTokenIndex;
+    if(idx === null) return;
+    const glyphId = state.sequence[idx];
+
+    state.glossary[glyphId] = {
+      value: el.glossValue.value.trim(),
+      notes: el.glossNotes.value
+    };
+    saveLS(LS.glossary, state.glossary);
+    updateHintsAndTranslation();
+    showGlyphDetails(glyphId);
+    setStatus("Saved glossary entry.");
+  }
+
+  function removeSelectedToken(){
+    const idx = state.selectedTokenIndex;
+    if(idx === null) return;
+    state.sequence.splice(idx, 1);
+    saveLS(LS.sequence, state.sequence);
+    if(!state.sequence.length){
+      state.selectedTokenIndex = null;
+    }else{
+      state.selectedTokenIndex = clamp(idx, 0, state.sequence.length - 1);
+    }
+    renderSequence();
+    updateHintsAndTranslation();
+  }
+
+  function updateHintsAndTranslation(){
+    // Pattern hint: Lunar calendar heuristic
+    const moonId = "MOTIF_MOON";
+    let longestMoonRun = 0;
+    let currentRun = 0;
+    for(const id of state.sequence){
+      if(id === moonId){
+        currentRun++;
+        longestMoonRun = Math.max(longestMoonRun, currentRun);
+      }else{
+        currentRun = 0;
+      }
+    }
+
+    if(longestMoonRun >= 8){
+      el.patternHint.textContent =
+        `This sequence includes a run of ${longestMoonRun} consecutive crescent/moon motifs. ` +
+        `Long runs of crescent-like glyphs are often discussed as “calendar-like”, especially in the Mamari tablet lunar calendar section. ` +
+        `This is only a heuristic; confirm visually and by comparing to scholarly transcriptions.`;
+    }else{
+      el.patternHint.textContent =
+        "No strong built-in hints detected. Add more glyphs (or import a richer library) to explore parallels and hypotheses.";
+    }
+
+    // Translation output (user-defined)
+    const translated = state.sequence.map(id => {
+      const v = state.glossary[id]?.value;
+      return v ? v : "•";
+    }).join(" ");
+    el.translationOut.textContent = translated || "—";
+  }
+
+  // ----------------------------
+  // Events: Upload
+  // ----------------------------
+  function handleFile(file){
+    if(!file) return;
+    if(!file.type.startsWith("image/")){
+      setStatus("That file doesn't look like an image.");
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      state.img = img;
+
+      // Create source canvas at natural size
+      const srcC = document.createElement("canvas");
+      srcC.width = img.naturalWidth;
+      srcC.height = img.naturalHeight;
+      const sctx = srcC.getContext("2d");
+      sctx.drawImage(img, 0, 0);
+      state.imgSourceCanvas = srcC;
+
+      clearSelection();
+      fitImage();
+      setStatus(`Loaded image (${img.naturalWidth}×${img.naturalHeight}). Select a glyph region to analyze.`);
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = () => {
+      setStatus("Could not load that image.");
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }
+
+  el.fileInput.addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    handleFile(file);
+    e.target.value = "";
+  });
+
+  // Dropzone support
+  el.dropzone.addEventListener("click", () => el.fileInput.click());
+  el.dropzone.addEventListener("dragover", (e) => { e.preventDefault(); el.dropzone.style.filter="contrast(1.1)"; });
+  el.dropzone.addEventListener("dragleave", () => { el.dropzone.style.filter=""; });
+  el.dropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    el.dropzone.style.filter="";
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    handleFile(file);
+  });
+
+  // ----------------------------
+  // Events: Mode toggle
+  // ----------------------------
+  function setMode(mode){
+    state.mode = mode;
+    el.modePan.setAttribute("aria-pressed", mode === "pan" ? "true" : "false");
+    el.modeSelect.setAttribute("aria-pressed", mode === "select" ? "true" : "false");
+    setStatus(mode === "select" ? "Select mode: drag a box around a glyph." : "Pan/Zoom mode.");
+  }
+  el.modePan.addEventListener("click", () => setMode("pan"));
+  el.modeSelect.addEventListener("click", () => setMode("select"));
+
+  // keyboard: space toggles pan temporarily
+  window.addEventListener("keydown", (e) => {
+    if(e.code === "Space"){ state.spaceDown = true; }
+    if(e.key === "Escape"){
+      hideAbout();
+    }
+  });
+  window.addEventListener("keyup", (e) => {
+    if(e.code === "Space"){ state.spaceDown = false; }
+  });
+
+  // ----------------------------
+  // Events: Canvas interactions
+  // ----------------------------
+  function getCanvasPoint(evt){
+    const rect = el.overlayCanvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    return {
+      x: (evt.clientX - rect.left) * dpr,
+      y: (evt.clientY - rect.top) * dpr
+    };
+  }
+
+  el.overlayCanvas.addEventListener("wheel", (e) => {
+    if(!state.img) return;
+    e.preventDefault();
+    const p = getCanvasPoint(e);
+    const factor = e.deltaY < 0 ? 1.1 : 0.9;
+    zoomAt(factor, p.x, p.y);
+  }, {passive:false});
+
+  el.overlayCanvas.addEventListener("mousedown", (e) => {
+    if(!state.img) return;
+    const p = getCanvasPoint(e);
+    const panNow = (state.mode === "pan") || state.spaceDown;
+
+    if(panNow){
+      state.dragging.active = true;
+      state.dragging.kind = "pan";
+      state.dragging.startX = p.x;
+      state.dragging.startY = p.y;
+      state.dragging.startOX = state.view.ox;
+      state.dragging.startOY = state.view.oy;
+      return;
+    }
+
+    if(state.mode === "select"){
+      const ip = screenToImagePoint(p.x, p.y);
+      state.dragging.active = true;
+      state.dragging.kind = "select";
+      state.dragging.startX = ip.x;
+      state.dragging.startY = ip.y;
+      state.selection = { x: ip.x, y: ip.y, w: 1, h: 1 };
+      draw();
+    }
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    if(!state.dragging.active || !state.img) return;
+    const rect = el.overlayCanvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const p = {
+      x: (e.clientX - rect.left) * dpr,
+      y: (e.clientY - rect.top) * dpr
+    };
+
+    if(state.dragging.kind === "pan"){
+      state.view.ox = state.dragging.startOX + (p.x - state.dragging.startX);
+      state.view.oy = state.dragging.startOY + (p.y - state.dragging.startY);
+      draw();
+      return;
+    }
+
+    if(state.dragging.kind === "select"){
+      const ip = screenToImagePoint(p.x, p.y);
+      const x0 = state.dragging.startX;
+      const y0 = state.dragging.startY;
+      const x1 = ip.x;
+      const y1 = ip.y;
+      const x = Math.min(x0,x1);
+      const y = Math.min(y0,y1);
+      const w = Math.max(1, Math.abs(x1-x0));
+      const h = Math.max(1, Math.abs(y1-y0));
+      state.selection = { x, y, w, h };
+      draw();
+    }
+  });
+
+  window.addEventListener("mouseup", () => {
+    if(!state.dragging.active) return;
+    state.dragging.active = false;
+    const kind = state.dragging.kind;
+    state.dragging.kind = null;
+    if(kind === "select"){
+      // finalize crop
+      makeCropFromSelection();
+    }
+  });
+
+  // Buttons
+  el.btnFit.addEventListener("click", fitImage);
+  el.btnCenter.addEventListener("click", centerView);
+  el.btnZoomIn.addEventListener("click", () => {
+    const cx = el.imgCanvas.width/2, cy = el.imgCanvas.height/2;
+    zoomAt(1.15, cx, cy);
+  });
+  el.btnZoomOut.addEventListener("click", () => {
+    const cx = el.imgCanvas.width/2, cy = el.imgCanvas.height/2;
+    zoomAt(0.85, cx, cy);
+  });
+
+  // Processing controls
+  [el.rngContrast, el.rngThreshold, el.chkInvert, el.chkEdges].forEach(input => {
+    input.addEventListener("input", () => {
+      if(!state.crop.imageData) return;
+      applyProcessing();
+      if(state.matches.length) analyzeSelection(); // keep results updated
+    });
+  });
+
+  el.btnAnalyze.addEventListener("click", analyzeSelection);
+  el.btnClearSel.addEventListener("click", clearSelection);
+
+  // ----------------------------
+  // Imports / Exports
+  // ----------------------------
+  el.glyphImport.addEventListener("change", async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if(!file) return;
+    try{
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if(!Array.isArray(data)) throw new Error("Expected an array of glyph objects.");
+      // accept entries with {id,name,category,notes,svg|imageDataUrl}
+      const cleaned = data.filter(g => g && typeof g.id === "string" && (g.svg || g.imageDataUrl));
+      if(!cleaned.length) throw new Error("No valid glyphs found (need id + svg/imageDataUrl).");
+
+      // store custom glyphs in LS (separate from builtin)
+      const customExisting = loadLS(LS.glyphs, []);
+      const merged = mergeGlyphLists(customExisting, cleaned);
+      saveLS(LS.glyphs, merged);
+
+      // reload glyphs
+      await loadGlyphsFromStorage();
+      setStatus(`Imported ${cleaned.length} glyph(s).`);
+    }catch(err){
+      setStatus("Glyph import failed: " + (err?.message || String(err)));
+      console.error(err);
+    }
+  });
+
+  function mergeGlyphLists(existing, incoming){
+    const map = new Map();
+    for(const g of existing){
+      if(g?.id) map.set(g.id, g);
+    }
+    for(const g of incoming){
+      map.set(g.id, g);
+    }
+    return Array.from(map.values());
+  }
+
+  el.glossImport.addEventListener("change", async (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if(!file) return;
+    try{
+      const text = await file.text();
+      const data = JSON.parse(text);
+      if(typeof data !== "object" || data === null) throw new Error("Expected an object mapping glyphId -> {value,notes}.");
+      state.glossary = data;
+      saveLS(LS.glossary, state.glossary);
+      updateSelectedTokenUI();
+      updateHintsAndTranslation();
+      setStatus("Glossary imported.");
+    }catch(err){
+      setStatus("Glossary import failed: " + (err?.message || String(err)));
+      console.error(err);
+    }
+  });
+
+  el.btnSeqExport.addEventListener("click", () => {
+    const ids = state.sequence.join(" ");
+    const translated = el.translationOut.textContent;
+    const text =
+`RongoLab sequence export
+-----------------------
+Glyph IDs:
+${ids || "—"}
+
+My glossary translation (• = unknown):
+${translated || "—"}
+
+(Notes are in the glossary export.)
+`;
+    downloadText("rongolab_sequence.txt", text);
+  });
+
+  el.btnExportAll.addEventListener("click", () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      sequence: state.sequence,
+      glossary: state.glossary,
+      customGlyphs: loadLS(LS.glyphs, [])
+    };
+    downloadJson("rongolab_export.json", payload);
+  });
+
+  el.btnSeqClear.addEventListener("click", () => {
+    state.sequence = [];
+    state.selectedTokenIndex = null;
+    saveLS(LS.sequence, state.sequence);
+    renderSequence();
+    updateHintsAndTranslation();
+    setStatus("Sequence cleared.");
+  });
+
+  el.btnReset.addEventListener("click", () => {
+    clearAllLS();
+    state.sequence = [];
+    state.glossary = {};
+    state.selectedTokenIndex = null;
+    state.glyphFingerprints.clear();
+    loadGlyphsFromStorage().then(() => {
+      clearSelection();
+      state.img = null;
+      state.imgSourceCanvas = null;
+      draw();
+      renderSequence();
+      updateHintsAndTranslation();
+      setStatus("Reset complete.");
+    });
+  });
+
+  // Token editor
+  function onGlossChanged(){
+    el.btnSaveGloss.disabled = (state.selectedTokenIndex === null);
+  }
+  el.glossValue.addEventListener("input", onGlossChanged);
+  el.glossNotes.addEventListener("input", onGlossChanged);
+  el.btnSaveGloss.addEventListener("click", saveGlossaryForSelected);
+  el.btnRemoveToken.addEventListener("click", removeSelectedToken);
+
+  // Search/filter library
+  el.searchGlyphs.addEventListener("input", renderGlyphGrid);
+  el.filterCategory.addEventListener("change", renderGlyphGrid);
+
+  // About modal
+  function showAbout(){
+    el.aboutModal.setAttribute("aria-hidden", "false");
+  }
+  function hideAbout(){
+    el.aboutModal.setAttribute("aria-hidden", "true");
+  }
+  el.btnAbout.addEventListener("click", showAbout);
+  el.btnCloseAbout.addEventListener("click", hideAbout);
+  el.aboutModal.addEventListener("click", (e) => {
+    if(e.target === el.aboutModal) hideAbout();
+  });
+
+  // ----------------------------
+  // Boot
+  // ----------------------------
+  async function loadGlyphsFromStorage(){
+    const custom = loadLS(LS.glyphs, []);
+    state.glyphs = [...BUILTIN_GLYPHS, ...custom];
+    state.glyphMap.clear();
+    state.glyphFingerprints.clear();
+    await ensureGlyphFingerprints();
+    renderGlyphGrid();
+  }
+
+  function boot(){
+    // restore
+    state.sequence = loadLS(LS.sequence, []);
+    state.glossary = loadLS(LS.glossary, {});
+    renderSequence();
+    updateHintsAndTranslation();
+
+    loadGlyphsFromStorage().then(() => {
+      renderGlyphGrid();
+      setStatus("Ready. Upload an image.");
+      draw();
+    });
+
+    // keep canvases sized
+    window.addEventListener("resize", () => {
+      draw();
+      if(state.img) fitImage();
+    });
+  }
+
+  boot();
+})();
+</script>
+</body>
+</html>
